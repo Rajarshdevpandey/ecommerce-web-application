@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Commerce Web Application (20 Products)</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+body{background:#f4f6f9;color:#333;}
+header{background:#232f3e;color:white;padding:15px 30px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;}
+.logo{font-size:22px;font-weight:bold;}
+.nav-buttons button{background:none;border:1px solid white;color:white;padding:8px 15px;margin-left:10px;border-radius:5px;cursor:pointer;font-weight:bold;}
+.nav-buttons button:hover{background:white;color:#232f3e;}
+.container{max-width:1400px;margin:30px auto;padding:0 20px;display:grid;grid-template-columns:3.5fr 1.5fr;gap:30px;}
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;}
+.product-card{background:white;padding:15px;border-radius:10px;box-shadow:0 4px 6px rgba(0,0,0,0.05);text-align:center;display:flex;flex-direction:column;justify-content:space-between;}
+.product-img{width:100%;height:150px;background:#eee;border-radius:8px;margin-bottom:12px;display:flex;justify-content:center;align-items:center;font-size:45px;}
+.product-title{font-size:16px;margin-bottom:8px;font-weight:600;min-height:44px;display:flex;align-items:center;justify-content:center;}
+.product-price{color:#B12704;font-size:18px;font-weight:bold;margin-bottom:12px;}
+.add-to-cart-btn{background:#ffd814;border:none;padding:10px;border-radius:20px;cursor:pointer;font-weight:500;width:100%;transition:0.2s;}
+.add-to-cart-btn:hover{background:#f7ca00;}
+.cart-section{background:white;padding:20px;border-radius:10px;box-shadow:0 4px 6px rgba(0,0,0,0.05);height:fit-content;position:sticky;top:90px;}
+.cart-title{font-size:20px;margin-bottom:15px;border-bottom:2px solid #eee;padding-bottom:10px;}
+.cart-item{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;padding-bottom:5px;border-bottom:1px dashed #eee;gap:10px;}
+.cart-total{font-size:18px;font-weight:bold;margin-top:20px;display:flex;justify-content:space-between;}
+.checkout-btn{background:#ff9900;color:white;border:none;width:100%;padding:12px;border-radius:8px;margin-top:15px;cursor:pointer;font-weight:bold;}
+.auth-container{max-width:400px;margin:100px auto;background:white;padding:30px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.1);text-align:center;}
+.auth-container input{width:100%;padding:12px;margin:10px 0;border:1px solid #ccc;border-radius:5px;}
+.auth-container button{width:100%;padding:12px;background:#232f3e;color:white;border:none;border-radius:5px;cursor:pointer;font-weight:bold;margin-top:10px;}
+.auth-toggle{margin-top:15px;background:none;border:none;color:#0066c0;cursor:pointer;}
+.hidden{display:none !important;}
+footer{text-align:center;padding:20px;background:#232f3e;color:white;margin-top:50px;font-size:14px;}
+</style>
+</head>
+<body>
+
+<header id="mainHeader" class="hidden">
+    <div class="logo">ThiranEx SuperStore</div>
+    <div class="nav-buttons">
+        <span id="welcomeUser" style="color: white; margin-right: 15px;"></span>
+        <button onclick="logout()">Logout</button>
+    </div>
+</header>
+
+<div id="authSection" class="auth-container">
+    <h2 id="authTitle">Sign In</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button id="authBtn" onclick="handleAuth()">Login</button>
+    <button class="auth-toggle" id="toggleAuthBtn" onclick="toggleAuthMode()">New to Store? Create account</button>
+</div>
+
+<div id="shopSection" class="container hidden">
+    <div>
+        <h2>Trending Products (20 Items Available)</h2>
+        <br>
+        <div class="products-grid" id="productsGrid"></div>
+    </div>
+    
+    <div class="cart-section">
+        <h3 class="cart-title">Shopping Cart 🛒</h3>
+        <div id="cartItems"></div>
+        <div class="cart-total">
+            <span>Total:</span>
+            <span>$ <span id="cartTotal">0.00</span></span>
+        </div>
+        <button class="checkout-btn" onclick="checkout()">Proceed to Checkout</button>
+    </div>
+</div>
+
+<footer id="mainFooter">Created by Rajarshdev Pandey</footer>
+
+<script>
+let isSignUpMode = false;
+let currentUser = localStorage.getItem("shopUser") || null;
+let cart = [];
+
+// 20 Domain-Specific Products List
+const products = [
+    { id: 1, title: "Wireless Headphones", price: 49.99, icon: "🎧" },
+    { id: 2, title: "Smart Watch Ultra", price: 99.99, icon: "⌚" },
+    { id: 3, title: "Gaming Mouse RGB", price: 25.49, icon: "🖱️" },
+    { id: 4, title: "Mechanical Keyboard", price: 59.99, icon: "⌨️" },
+    { id: 5, title: "Bluetooth Speaker", price: 34.99, icon: "🔊" },
+    { id: 6, title: "Fast Power Bank 20K", price: 19.99, icon: "🔋" },
+    { id: 7, title: "4K Action Camera", price: 129.99, icon: "📷" },
+    { id: 8, title: "Leather Wallet Classic", price: 15.75, icon: "💼" },
+    { id: 9, title: "Running Sports Shoes", price: 65.00, icon: "👟" },
+    { id: 10, title: "Polarized Sunglasses", price: 12.99, icon: "🕶️" },
+    { id: 11, title: "Stainless Water Bottle", price: 18.50, icon: "🥛" },
+    { id: 12, title: "Ergonomic Office Chair", price: 149.99, icon: "🪑" },
+    { id: 13, title: "LED Desk Lamp", price: 22.45, icon: "💡" },
+    { id: 14, title: "Fitness Tracking Band", price: 29.99, icon: "🏃" },
+    { id: 15, title: "Wireless Charging Pad", price: 14.99, icon: "🔌" },
+    { id: 16, title: "Travel Backpack Waterproof", price: 39.99, icon: "🎒" },
+    { id: 17, title: "Electric Coffee Mug", price: 45.00, icon: "☕" },
+    { id: 18, title: "Smart Home Security Cam", price: 79.99, icon: "📹" },
+    { id: 19, title: "Noise Cancelling Earbuds", price: 89.99, icon: "🧏" },
+    { id: 20, title: "Electric Toothbrush", price: 31.25, icon: "🪥" }
+];
+
+window.onload = function() {
+    if(currentUser) { showShop(); } else { showAuth(); }
+};
+
+function toggleAuthMode() {
+    isSignUpMode = !isSignUpMode;
+    document.getElementById("authTitle").innerText = isSignUpMode ? "Create Account" : "Sign In";
+    document.getElementById("authBtn").innerText = isSignUpMode ? "Register" : "Login";
+    document.getElementById("toggleAuthBtn").innerText = isSignUpMode ? "Already have an account? Sign In" : "New to Store? Create account";
+}
+
+function handleAuth() {
+    const user = document.getElementById("username").value.trim();
+    const pass = document.getElementById("password").value.trim();
+    if(!user || !pass) { alert("Please fill all fields!"); return; }
+
+    let users = JSON.parse(localStorage.getItem("shop_users")) || {};
+    if(isSignUpMode) {
+        if(users[user]) { alert("Username already exists!"); return; }
+        users[user] = pass;
+        localStorage.setItem("shop_users", JSON.stringify(users));
+        alert("Registration successful! Please login.");
+        toggleAuthMode();
+    } else {
+        if(users[user] && users[user] === pass) {
+            currentUser = user;
+            localStorage.setItem("shopUser", currentUser);
+            showShop();
+        } else { alert("Invalid credentials!"); }
+    }
+}
+
+function logout() {
+    localStorage.removeItem("shopUser");
+    currentUser = null;
+    showAuth();
+}
+
+function showAuth() {
+    document.getElementById("authSection").classList.remove("hidden");
+    document.getElementById("shopSection").classList.add("hidden");
+    document.getElementById("mainHeader").classList.add("hidden");
+}
+
+function showShop() {
+    document.getElementById("authSection").classList.add("hidden");
+    document.getElementById("shopSection").classList.remove("hidden");
+    document.getElementById("mainHeader").classList.remove("hidden");
+    document.getElementById("welcomeUser").innerText = "Hello, " + currentUser;
+    renderProducts();
+    renderCart();
+}
+
+function renderProducts() {
+    const grid = document.getElementById("productsGrid");
+    grid.innerHTML = "";
+    products.forEach(p => {
+        grid.innerHTML += `
+            <div class="product-card">
+                <div class="product-img">${p.icon}</div>
+                <div class="product-title">${p.title}</div>
+                <div class="product-price">$${p.price.toFixed(2)}</div>
+                <button class="add-to-cart-btn" onclick="addToCart(${p.id})">Add to Cart</button>
+            </div>
+        `;
+    });
+}
+
+function addToCart(id) {
+    const product = products.find(p => p.id === id);
+    const cartItem = cart.find(item => item.id === id);
+    if(cartItem) {
+        cartItem.quantity++;
+    } else {
+        cart.push({ ...product, quantity: 1 });
+    }
+    renderCart();
+}
+
+function removeFromCart(id) {
+    cart = cart.filter(item => item.id !== id);
+    renderCart();
+}
+
+function renderCart() {
+    const container = document.getElementById("cartItems");
+    const totalSpan = document.getElementById("cartTotal");
+    container.innerHTML = "";
+    let total = 0;
+
+    if(cart.length === 0) {
+        container.innerHTML = "<p style='color:gray;text-align:center;'>Your cart is empty.</p>";
+        totalSpan.innerText = "0.00";
+        return;
+    }
+
+    cart.forEach(item => {
+        total += item.price * item.quantity;
+        container.innerHTML += `
+            <div class="cart-item">
+                <span style="flex:1;">${item.title} (x${item.quantity})</span>
+                <span style="font-weight:bold; white-space:nowrap;">$${(item.price * item.quantity).toFixed(2)}</span>
+                <button onclick="removeFromCart(${item.id})" style="background:none;border:none;color:red;cursor:pointer;font-weight:bold;padding:0 5px;">X</button>
+            </div>
+        `;
+    });
+    totalSpan.innerText = total.toFixed(2);
+}
+
+function checkout() {
+    if(cart.length === 0) { alert("Your cart is empty!"); return; }
+    alert(`Thank you for shopping ${currentUser}! Your order total is $${document.getElementById("cartTotal").innerText}. Order Placed Successfully! 🎉`);
+    cart = [];
+    renderCart();
+}
+</script>
+</body>
+</html>
